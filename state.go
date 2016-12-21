@@ -3,17 +3,20 @@ package go_sheep
 import (
 	"errors"
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 type MembershipMessage struct {
 	UUID     string
 	Address  string
-	LastSeen time.Time
+	LastSeen *timestamp.Timestamp
 }
 
 type State []MembershipMessage
 
-func MergeState(as, bs *State) (newState *State) {
+func MergeState(as, bs *State) (newState *State, err error) {
 	newState = &State{}
 	*newState = make([]MembershipMessage, 0)
 
@@ -24,8 +27,18 @@ func MergeState(as, bs *State) (newState *State) {
 		for j := 0; j < len(*bs); j++ {
 			if (*as)[i].UUID == (*bs)[j].UUID {
 				notFound = false
-				aTime = (*as)[i].LastSeen
-				if (*as)[i].LastSeen.After((*bs)[j].LastSeen) {
+
+				aTime, err = ptypes.Timestamp((*as)[i].LastSeen)
+				if err != nil {
+					return nil, err
+				}
+
+				bTime, err = ptypes.Timestamp((*bs)[j].LastSeen)
+				if err != nil {
+					return nil, err
+				}
+
+				if aTime.After(bTime) {
 					(*newState) = append((*newState), (*as)[i])
 				} else {
 					(*newState) = append((*newState), (*bs)[j])

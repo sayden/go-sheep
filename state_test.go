@@ -3,60 +3,37 @@ package go_sheep
 import (
 	"testing"
 	"time"
-	"github.com/kr/pretty"
+
+	"github.com/golang/protobuf/ptypes"
 )
 
 var initial *State = &State{
-	{
-		UUID:     "1",
-		Address:  "1:1234",
-		LastSeen: time.Now(),
-	},
-	{
-		UUID:     "2",
-		Address:  "2:2234",
-		LastSeen: time.Now(),
-	},
-	{
-		UUID:     "3",
-		Address:  "3:9876",
-		LastSeen: time.Now().Add(time.Second * 5),
-	},
+	{UUID: "1", Address: "1:1234"},
+	{UUID: "2", Address: "2:2234"},
+	{UUID: "3", Address: "3:9876"},
 }
 
 var arrivedMessage *State = &State{
-	{
-		UUID:     "1",
-		Address:  "1:1234",
-		LastSeen: time.Now(),
-	},
-	{
-		UUID:     "2",
-		Address:  "2:22234",
-		LastSeen: time.Now().Add(time.Second * 10),
-	},
-	{
-		UUID:     "3",
-		Address:  "6:3334",
-		LastSeen: time.Now(),
-	},
-	{
-		UUID:     "4",
-		Address:  "4:3334",
-		LastSeen: time.Now().Add(-(time.Second * 10)),
-	},
+	{UUID: "1", Address: "1:1234"},
+	{UUID: "2", Address: "2:22234"},
+	{UUID: "3", Address: "6:3334"},
+	{UUID: "4", Address: "4:3334"},
 }
 
 func TestState_Merge(t *testing.T) {
-	original := MergeState(initial, arrivedMessage)
-	//t.Logf("%# v", pretty.Formatter(original))
+	(*initial)[0].LastSeen, _ = ptypes.TimestampProto(time.Now())
+	(*initial)[1].LastSeen, _ = ptypes.TimestampProto(time.Now())
+	(*initial)[2].LastSeen, _ = ptypes.TimestampProto(time.Now().Add(time.Second * 5))
 
-		defer func(){
-			if err := recover(); err != nil {
-				t.Logf("%# v\nERROR: %# v", pretty.Formatter(original), pretty.Formatter(err))
-				t.Fail()
-			}
-		}()
+	(*arrivedMessage)[0].LastSeen, _ = ptypes.TimestampProto(time.Now())
+	(*arrivedMessage)[1].LastSeen, _ = ptypes.TimestampProto(time.Now().Add(time.Second * 10))
+	(*arrivedMessage)[2].LastSeen, _ = ptypes.TimestampProto(time.Now())
+	(*arrivedMessage)[3].LastSeen, _ = ptypes.TimestampProto(time.Now().Add(-(time.Second * 10)))
+
+	original, err := MergeState(initial, arrivedMessage)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if len(*original) != len(*arrivedMessage) {
 		t.Error()
@@ -78,7 +55,10 @@ func TestState_Merge(t *testing.T) {
 		t.Error()
 	}
 
-	original = MergeState(arrivedMessage, initial)
+	original, err = MergeState(arrivedMessage, initial)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if len(*original) != len(*arrivedMessage) {
 		t.Error()
