@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "github.com/golang/protobuf/ptypes/timestamp/timestamp.proto";
 
-package transport;
+package go_sheep;
 
 // The greeting service definition.
 service Pinger {
@@ -18,5 +18,5 @@ message Node {
 }
 
 message State {
-    repeated Node = 4;
+    repeated Node Nodes = 4;
 }
