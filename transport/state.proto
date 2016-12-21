@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "github.com/golang/protobuf/ptypes/timestamp/timestamp.proto";
+
+package transport;
+
+// The greeting service definition.
+service Pinger {
+    // Sends a greeting
+    rpc Ping (Node) returns (State) {}
+}
+
+// The request message containing the user's name.
+message Node {
+    string uuid = 1;
+    string address = 2;
+    google.protobuf.Timestamp lastSeen = 3;
+}
+
+message State {
+    repeated Node = 4;
+}
