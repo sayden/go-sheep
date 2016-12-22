@@ -4,19 +4,42 @@ import "github.com/golang/protobuf/ptypes/timestamp/timestamp.proto";
 
 package go_sheep;
 
-// The greeting service definition.
-service Pinger {
-    // Sends a greeting
+// SWIM service
+service SWIM {
+    // Ping sends State to a previously randomized address to retrieve its state already merge with ours.
     rpc Ping (State) returns (State) {}
+
+    // DelegateCheck sends State to a delegated node so it can check agains Target node. Returns:
+    // - The state of the target AND the delegated node (the node we are connecting to)
+    // - The state of the delegated node and an error if it couldn't get state from Target
+    // - An error only if something happened
+    rpc DelegateCheck(DelegateCheckRequest) returns (State) {}
 }
 
-// The request message containing the user's name.
+message DelegateCheckRequest {
+    State state = 1;
+    string target = 2;
+}
+
+// States is an array of State objects
+message States {
+    repeated State States = 1;
+}
+
+// Target is a Node that will be pinged by delegated Nodes
+message Target {
+    string address = 1;
+}
+
+// Node contains membership information of a particular host
 message Node {
     string uuid = 1;
     string address = 2;
     google.protobuf.Timestamp lastSeen = 3;
 }
 
+// State represents an array of Node with their current membership info.
+// Each host must have an stored state.
 message State {
     repeated Node Nodes = 4;
 }

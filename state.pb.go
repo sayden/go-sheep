@@ -9,6 +9,9 @@ It is generated from these files:
 	state.proto
 
 It has these top-level messages:
+	DelegateCheckRequest
+	States
+	Target
 	Node
 	State
 */
@@ -35,7 +38,65 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-// The request message containing the user's name.
+type DelegateCheckRequest struct {
+	State  *State `protobuf:"bytes,1,opt,name=state" json:"state,omitempty"`
+	Target string `protobuf:"bytes,2,opt,name=target" json:"target,omitempty"`
+}
+
+func (m *DelegateCheckRequest) Reset()                    { *m = DelegateCheckRequest{} }
+func (m *DelegateCheckRequest) String() string            { return proto.CompactTextString(m) }
+func (*DelegateCheckRequest) ProtoMessage()               {}
+func (*DelegateCheckRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+func (m *DelegateCheckRequest) GetState() *State {
+	if m != nil {
+		return m.State
+	}
+	return nil
+}
+
+func (m *DelegateCheckRequest) GetTarget() string {
+	if m != nil {
+		return m.Target
+	}
+	return ""
+}
+
+// States is an array of State objects
+type States struct {
+	States []*State `protobuf:"bytes,1,rep,name=States,json=states" json:"States,omitempty"`
+}
+
+func (m *States) Reset()                    { *m = States{} }
+func (m *States) String() string            { return proto.CompactTextString(m) }
+func (*States) ProtoMessage()               {}
+func (*States) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *States) GetStates() []*State {
+	if m != nil {
+		return m.States
+	}
+	return nil
+}
+
+// Target is a Node that will be pinged by delegated Nodes
+type Target struct {
+	Address string `protobuf:"bytes,1,opt,name=address" json:"address,omitempty"`
+}
+
+func (m *Target) Reset()                    { *m = Target{} }
+func (m *Target) String() string            { return proto.CompactTextString(m) }
+func (*Target) ProtoMessage()               {}
+func (*Target) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *Target) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+// Node contains membership information of a particular host
 type Node struct {
 	Uuid     string                     `protobuf:"bytes,1,opt,name=uuid" json:"uuid,omitempty"`
 	Address  string                     `protobuf:"bytes,2,opt,name=address" json:"address,omitempty"`
@@ -45,7 +106,7 @@ type Node struct {
 func (m *Node) Reset()                    { *m = Node{} }
 func (m *Node) String() string            { return proto.CompactTextString(m) }
 func (*Node) ProtoMessage()               {}
-func (*Node) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*Node) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *Node) GetUuid() string {
 	if m != nil {
@@ -68,6 +129,8 @@ func (m *Node) GetLastSeen() *google_protobuf.Timestamp {
 	return nil
 }
 
+// State represents an array of Node with their current membership info.
+// Each host must have an stored state.
 type State struct {
 	Nodes []*Node `protobuf:"bytes,4,rep,name=Nodes,json=nodes" json:"Nodes,omitempty"`
 }
@@ -75,7 +138,7 @@ type State struct {
 func (m *State) Reset()                    { *m = State{} }
 func (m *State) String() string            { return proto.CompactTextString(m) }
 func (*State) ProtoMessage()               {}
-func (*State) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*State) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *State) GetNodes() []*Node {
 	if m != nil {
@@ -85,6 +148,9 @@ func (m *State) GetNodes() []*Node {
 }
 
 func init() {
+	proto.RegisterType((*DelegateCheckRequest)(nil), "go_sheep.DelegateCheckRequest")
+	proto.RegisterType((*States)(nil), "go_sheep.States")
+	proto.RegisterType((*Target)(nil), "go_sheep.Target")
 	proto.RegisterType((*Node)(nil), "go_sheep.Node")
 	proto.RegisterType((*State)(nil), "go_sheep.State")
 }
@@ -97,66 +163,107 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for Pinger service
+// Client API for SWIM service
 
-type PingerClient interface {
-	// Sends a greeting
+type SWIMClient interface {
+	// Ping sends State to a previously randomized address to retrieve its state already merge with ours.
 	Ping(ctx context.Context, in *State, opts ...grpc.CallOption) (*State, error)
+	// DelegateCheck sends State to a delegated node so it can check agains Target node. Returns:
+	// - The state of the target AND the delegated node (the node we are connecting to)
+	// - The state of the delegated node and an error if it couldn't get state from Target
+	// - An error only if something happened
+	DelegateCheck(ctx context.Context, in *DelegateCheckRequest, opts ...grpc.CallOption) (*State, error)
 }
 
-type pingerClient struct {
+type sWIMClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewPingerClient(cc *grpc.ClientConn) PingerClient {
-	return &pingerClient{cc}
+func NewSWIMClient(cc *grpc.ClientConn) SWIMClient {
+	return &sWIMClient{cc}
 }
 
-func (c *pingerClient) Ping(ctx context.Context, in *State, opts ...grpc.CallOption) (*State, error) {
+func (c *sWIMClient) Ping(ctx context.Context, in *State, opts ...grpc.CallOption) (*State, error) {
 	out := new(State)
-	err := grpc.Invoke(ctx, "/go_sheep.Pinger/Ping", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/go_sheep.SWIM/Ping", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for Pinger service
+func (c *sWIMClient) DelegateCheck(ctx context.Context, in *DelegateCheckRequest, opts ...grpc.CallOption) (*State, error) {
+	out := new(State)
+	err := grpc.Invoke(ctx, "/go_sheep.SWIM/DelegateCheck", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 
-type PingerServer interface {
-	// Sends a greeting
+// Server API for SWIM service
+
+type SWIMServer interface {
+	// Ping sends State to a previously randomized address to retrieve its state already merge with ours.
 	Ping(context.Context, *State) (*State, error)
+	// DelegateCheck sends State to a delegated node so it can check agains Target node. Returns:
+	// - The state of the target AND the delegated node (the node we are connecting to)
+	// - The state of the delegated node and an error if it couldn't get state from Target
+	// - An error only if something happened
+	DelegateCheck(context.Context, *DelegateCheckRequest) (*State, error)
 }
 
-func RegisterPingerServer(s *grpc.Server, srv PingerServer) {
-	s.RegisterService(&_Pinger_serviceDesc, srv)
+func RegisterSWIMServer(s *grpc.Server, srv SWIMServer) {
+	s.RegisterService(&_SWIM_serviceDesc, srv)
 }
 
-func _Pinger_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SWIM_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(State)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PingerServer).Ping(ctx, in)
+		return srv.(SWIMServer).Ping(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/go_sheep.Pinger/Ping",
+		FullMethod: "/go_sheep.SWIM/Ping",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PingerServer).Ping(ctx, req.(*State))
+		return srv.(SWIMServer).Ping(ctx, req.(*State))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Pinger_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "go_sheep.Pinger",
-	HandlerType: (*PingerServer)(nil),
+func _SWIM_DelegateCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DelegateCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SWIMServer).DelegateCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_sheep.SWIM/DelegateCheck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SWIMServer).DelegateCheck(ctx, req.(*DelegateCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _SWIM_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "go_sheep.SWIM",
+	HandlerType: (*SWIMServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Ping",
-			Handler:    _Pinger_Ping_Handler,
+			Handler:    _SWIM_Ping_Handler,
+		},
+		{
+			MethodName: "DelegateCheck",
+			Handler:    _SWIM_DelegateCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -166,20 +273,25 @@ var _Pinger_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("state.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 228 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x5c, 0x4f, 0x4d, 0x4b, 0xc4, 0x30,
-	0x10, 0xb5, 0x6e, 0xbb, 0xae, 0x53, 0x50, 0xc8, 0x29, 0xf4, 0x54, 0x8a, 0x87, 0x22, 0x98, 0x42,
-	0x15, 0x2f, 0xfe, 0x07, 0x91, 0xae, 0x77, 0x49, 0xed, 0x6c, 0xb6, 0xd0, 0x26, 0xa1, 0x99, 0x1c,
-	0xfc, 0xf7, 0x92, 0x68, 0x2d, 0x78, 0x7b, 0xf3, 0xe6, 0xf1, 0x3e, 0x20, 0x77, 0x24, 0x09, 0x85,
-	0x5d, 0x0c, 0x19, 0x76, 0x50, 0xe6, 0xc3, 0x9d, 0x11, 0x6d, 0xf1, 0xa2, 0x46, 0x3a, 0xfb, 0x5e,
-	0x7c, 0x9a, 0xb9, 0x51, 0x66, 0x92, 0x5a, 0x35, 0x51, 0xd2, 0xfb, 0x53, 0x63, 0xe9, 0xcb, 0xa2,
-	0x6b, 0x68, 0x9c, 0xd1, 0x91, 0x9c, 0xed, 0x86, 0x7e, 0x6c, 0xaa, 0x09, 0xd2, 0x57, 0x33, 0x20,
-	0x63, 0x90, 0x7a, 0x3f, 0x0e, 0x3c, 0x29, 0x93, 0xfa, 0xba, 0x8b, 0x98, 0x71, 0xb8, 0x92, 0xc3,
-	0xb0, 0xa0, 0x73, 0xfc, 0x32, 0xd2, 0xeb, 0xc9, 0x9e, 0xe1, 0x30, 0x49, 0x47, 0x47, 0x44, 0xcd,
-	0x77, 0x65, 0x52, 0xe7, 0x6d, 0x21, 0x94, 0x31, 0x6a, 0xfa, 0x6d, 0xd7, 0xfb, 0x93, 0x78, 0x5f,
-	0x93, 0xba, 0x3f, 0x6d, 0xf5, 0x00, 0xd9, 0x31, 0x6c, 0x60, 0x77, 0x90, 0x85, 0x58, 0xc7, 0xd3,
-	0x72, 0x57, 0xe7, 0xed, 0x8d, 0x58, 0xd7, 0x88, 0x40, 0x77, 0x99, 0x0e, 0xcf, 0xf6, 0x09, 0xf6,
-	0x6f, 0xa3, 0x56, 0xb8, 0xb0, 0x7b, 0x48, 0x03, 0x62, 0xb7, 0x9b, 0x30, 0x1a, 0x15, 0xff, 0x89,
-	0xea, 0xa2, 0xdf, 0xc7, 0x0a, 0x8f, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x4e, 0x12, 0xdb, 0x58,
-	0x2f, 0x01, 0x00, 0x00,
+	// 318 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x6c, 0x51, 0x4d, 0x4b, 0xc3, 0x40,
+	0x10, 0x35, 0x6d, 0x12, 0xdb, 0x29, 0x2a, 0x0c, 0x22, 0xa1, 0x07, 0x29, 0x8b, 0x62, 0x11, 0x4c,
+	0xb0, 0x82, 0x17, 0x6f, 0xea, 0xc5, 0x83, 0x22, 0x69, 0xc5, 0xa3, 0x6c, 0x9a, 0xe9, 0x36, 0x98,
+	0x66, 0x63, 0x77, 0x57, 0xf0, 0xdf, 0x4b, 0xb6, 0x8d, 0xb5, 0x25, 0xb7, 0xf9, 0x78, 0xf3, 0xde,
+	0xbe, 0xb7, 0xd0, 0x53, 0x9a, 0x6b, 0x0a, 0xcb, 0xa5, 0xd4, 0x12, 0x3b, 0x42, 0x7e, 0xa8, 0x39,
+	0x51, 0xd9, 0xbf, 0x13, 0x99, 0x9e, 0x9b, 0x24, 0x9c, 0xca, 0x45, 0x24, 0x64, 0xce, 0x0b, 0x11,
+	0x59, 0x48, 0x62, 0x66, 0x51, 0xa9, 0x7f, 0x4a, 0x52, 0x91, 0xce, 0x16, 0xa4, 0x34, 0x5f, 0x94,
+	0x9b, 0x6a, 0x45, 0xc3, 0xde, 0xe0, 0xf8, 0x91, 0x72, 0x12, 0x5c, 0xd3, 0xc3, 0x9c, 0xa6, 0x9f,
+	0x31, 0x7d, 0x19, 0x52, 0x1a, 0xcf, 0xc1, 0xb3, 0x6a, 0x81, 0x33, 0x70, 0x86, 0xbd, 0xd1, 0x51,
+	0x58, 0xcb, 0x85, 0xe3, 0x6a, 0x1c, 0xaf, 0xb6, 0x78, 0x02, 0xbe, 0xe6, 0x4b, 0x41, 0x3a, 0x68,
+	0x0d, 0x9c, 0x61, 0x37, 0x5e, 0x77, 0xec, 0x1a, 0x7c, 0x8b, 0x53, 0x78, 0x51, 0x57, 0x81, 0x33,
+	0x68, 0x37, 0x31, 0xf9, 0x96, 0x49, 0x31, 0x06, 0xfe, 0xc4, 0x1e, 0x63, 0x00, 0xfb, 0x3c, 0x4d,
+	0x97, 0xa4, 0x94, 0x55, 0xef, 0xc6, 0x75, 0xcb, 0x72, 0x70, 0x5f, 0x64, 0x4a, 0x88, 0xe0, 0x1a,
+	0x93, 0xa5, 0xeb, 0xb5, 0xad, 0xff, 0x5f, 0xb5, 0xb6, 0xae, 0xf0, 0x16, 0x3a, 0x39, 0x57, 0x7a,
+	0x4c, 0x54, 0x04, 0x6d, 0x6b, 0xa7, 0x1f, 0x0a, 0x29, 0x45, 0xbe, 0xce, 0x32, 0x31, 0xb3, 0x70,
+	0x52, 0xe7, 0x12, 0xff, 0x61, 0xd9, 0x15, 0x78, 0xf6, 0x89, 0x78, 0x06, 0x5e, 0x25, 0xab, 0x02,
+	0xd7, 0x5a, 0x38, 0xdc, 0x58, 0xa8, 0xc6, 0xb1, 0x57, 0x54, 0xcb, 0xd1, 0x37, 0xb8, 0xe3, 0xf7,
+	0xa7, 0x67, 0xbc, 0x04, 0xf7, 0x35, 0x2b, 0x04, 0xee, 0x3a, 0xed, 0xef, 0x0e, 0xd8, 0x1e, 0xde,
+	0xc3, 0xc1, 0x56, 0xfc, 0x78, 0xba, 0xc1, 0x34, 0xfd, 0x4b, 0x03, 0x47, 0xe2, 0x5b, 0x13, 0x37,
+	0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x8a, 0x87, 0x5a, 0x43, 0x1f, 0x02, 0x00, 0x00,
 }
