@@ -7,7 +7,7 @@ package go_sheep;
 // The greeting service definition.
 service Pinger {
     // Sends a greeting
-    rpc Ping (Node) returns (State) {}
+    rpc Ping (State) returns (State) {}
 }
 
 // The request message containing the user's name.
