@@ -181,7 +181,7 @@ func TestGetCheckers(t *testing.T) {
 	}
 
 	for _, node := range nodes {
-		if node == currentNode || node == target {
+		if node == currentNode || node == target{
 			t.Fail()
 		}
 	}
