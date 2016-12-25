@@ -14,6 +14,8 @@ service SWIM {
     // - The state of the delegated node and an error if it couldn't get state from Target
     // - An error only if something happened
     rpc DelegateCheck(DelegateCheckRequest) returns (State) {}
+
+    rpc Join(Node) returns (State) {}
 }
 
 message DelegateCheckRequest {
