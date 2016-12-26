@@ -9,11 +9,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-type grpcTransport struct{
+type grpcClient struct {
 	go_sheep.Transporter
 }
 
-func (g *grpcTransport) Ping(s *go_sheep.State, a string) (state *go_sheep.State, err error) {
+func NewGRPCTransport() go_sheep.Transporter {
+	return &grpcClient{}
+}
+
+func (g *grpcClient) Ping(s *go_sheep.State, a string) (state *go_sheep.State, err error) {
 	var conn *grpc.ClientConn
 	conn, err = grpc.Dial(a, grpc.WithInsecure())
 	if err != nil {
@@ -26,7 +30,7 @@ func (g *grpcTransport) Ping(s *go_sheep.State, a string) (state *go_sheep.State
 	return
 }
 
-func (g *grpcTransport) IndirectPing(s *go_sheep.State, delegatedNodes []string, t string) (states []*go_sheep.State, errors error) {
+func (g *grpcClient) IndirectPing(s *go_sheep.State, delegatedNodes []string, t string) (states []*go_sheep.State, err error) {
 	out := make(chan *go_sheep.State, len(delegatedNodes))
 	errCh := make(chan error, len(delegatedNodes))
 
@@ -79,20 +83,44 @@ func (g *grpcTransport) IndirectPing(s *go_sheep.State, delegatedNodes []string,
 		states = append(states, state)
 	}
 
-	sheepError := &go_sheep.Error{
-		Errs:    make([]error, len(errCh)),
-		File:    "grpc.go",
-		Method:  "IndirectPing",
-		Package: "transport",
-	}
+	errors := go_sheep.NewErrors(len(errCh))
 
 	var i int
 	for err := range errCh {
-		sheepError.Errs[i] = err
+		(*errors)[i] = err
 		i++
 	}
 
-	errors = sheepError
+	err = errors
 
 	return
+}
+
+func (swim *grpcClient) Join(in, targetServer *go_sheep.Node) (state *go_sheep.State, err error) {
+	var conn *grpc.ClientConn
+	conn, err = grpc.Dial(targetServer.Address, grpc.WithInsecure())
+	if err != nil {
+		return
+	}
+
+	client := go_sheep.NewSWIMClient(conn)
+	state, err = client.Join(context.Background(), in)
+
+	return
+}
+
+type grpcServer struct {
+	go_sheep.SWIMServer
+}
+
+func (swim *grpcServer) Ping(context.Context, *go_sheep.State) (*go_sheep.State, error) {
+
+}
+
+func (swim *grpcServer) DelegateCheck(context.Context, *go_sheep.DelegateCheckRequest) (*go_sheep.State, error) {
+
+}
+
+func (swim *grpcServer) Join(context.Context, *go_sheep.Node) (*go_sheep.State, error) {
+
 }

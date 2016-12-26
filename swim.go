@@ -21,5 +21,8 @@ type SWIM interface {
 	IndirectPing(s *State, d []*Node, t *Node) ([]*State, error)
 
 	//CheckNode must be triggered by a remote node 'source' to check target 't' passing state 'a'.
-	CheckNode(s *State, t, source string)
+	CheckNode(s *State, t, source string) error
+
+	// Merge state takes a state A and merges it with a state B returning the merged result
+	MergeState(a, b *State) (*State, error)
 }

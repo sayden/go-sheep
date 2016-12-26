@@ -2,35 +2,25 @@ package go_sheep
 
 import "fmt"
 
-type Error struct {
-	Package string
-	File    string
-	Method  string
-	Reason  string
-	Errs    []error
+type Errors []error
+
+func NewErrors(n int) *Errors {
+	var errors Errors = make([]error, n)
+	return &errors
 }
 
-func (e *Error) Error() (res string) {
-	res = fmt.Sprintf("Package: %s\nFile: %s\nMethod: %s\n", e.Package, e.File, e.Method)
-
-	for _, err := range e.Errs {
-		res = fmt.Sprintf("%sError: %s\nReason: %s\n", res, err.Error(), e.Reason)
+func (e Errors) Error() (err string) {
+	for _, error := range e {
+		err = fmt.Sprintf("%s\n%s\n", err, error.Error())
 	}
+
 	return
-}
-
-func (er *Error) NewError(r, m string, e ...error) error {
-	return &Error{
-		Errs:   e,
-		Reason: r,
-		Method: m,
-	}
 }
 
 type CheckError struct {
 	Source Node
 	Target Node
-	Err error
+	Err    error
 }
 
 func (c *CheckError) Error() string {
@@ -39,8 +29,12 @@ func (c *CheckError) Error() string {
 
 func NewCheckError(s, t Node, err error) error {
 	return &CheckError{
-		Err:err,
-		Source:s,
-		Target:t,
+		Err:    err,
+		Source: s,
+		Target: t,
 	}
+}
+
+type NetworkError struct {
+	error
 }
