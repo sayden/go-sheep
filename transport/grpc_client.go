@@ -3,6 +3,8 @@ package transport
 import (
 	"context"
 
+	"google.golang.org/grpc"
+
 	"sync"
 
 	"github.com/sayden/go-sheep"
@@ -10,10 +12,6 @@ import (
 
 type grpcClient struct {
 	go_sheep.Transporter
-}
-
-func NewGRPCTransport() go_sheep.Transporter {
-	return &grpcClient{}
 }
 
 func (g *grpcClient) Ping(s *go_sheep.State, a string) (state *go_sheep.State, err error) {
@@ -106,20 +104,4 @@ func (swim *grpcClient) Join(in, targetServer *go_sheep.Node) (state *go_sheep.S
 	state, err = client.Join(context.Background(), in)
 
 	return
-}
-
-type grpcServer struct {
-	go_sheep.SWIMServer
-}
-
-func (swim *grpcServer) Ping(context.Context, *go_sheep.State) (*go_sheep.State, error) {
-
-}
-
-func (swim *grpcServer) DelegateCheck(context.Context, *go_sheep.DelegateCheckRequest) (*go_sheep.State, error) {
-
-}
-
-func (swim *grpcServer) Join(context.Context, *go_sheep.Node) (*go_sheep.State, error) {
-
 }

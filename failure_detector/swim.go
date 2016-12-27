@@ -14,9 +14,9 @@ type swim struct {
 	transport go_sheep.Transporter
 }
 
-func NewSwim() go_sheep.SWIM {
+func NewSwim(t go_sheep.Transporter) go_sheep.SWIM {
 	return &swim{
-		transport: transport.NewGRPCTransport(),
+		transport: t,
 	}
 }
 
