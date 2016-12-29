@@ -2,7 +2,7 @@ package go_sheep
 
 type SWIM interface {
 	// Ping sends state 's' to an address:port 'a' and returns State of 'a' OR error
-	Ping(s *State, a string) (*State, error)
+	//Ping(s *State, a string) (*State, error)
 
 	// RandomizedTarget returns a Node to ping that is not equal to 'currentNodeInfo'
 	// or error if no valid address is found.
@@ -18,10 +18,10 @@ type SWIM interface {
 	// - An array of states where just the delegated nodes has returned their state
 	// - An array of states with a single state from one of the delegated nodes.
 	// - No answer from any node.
-	IndirectPing(s *State, d []*Node, t *Node) ([]*State, error)
+	//IndirectPing(s *State, d []*Node, t *Node) ([]*State, error)
 
 	//CheckNode must be triggered by a remote node 'source' to check target 't' passing state 'a'.
-	CheckNode(s *State, t, source string) error
+	//CheckNode(s *State, t, source string) error
 
 	// Merge state takes a state A and merges it with a state B returning the merged result
 	MergeState(a, b *State) (*State, error)

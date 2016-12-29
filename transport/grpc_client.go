@@ -10,24 +10,11 @@ import (
 	"github.com/sayden/go-sheep"
 )
 
-type grpcClient struct {
-	go_sheep.Transporter
+type GRPCClient struct {
+	Client
 }
 
-func (g *grpcClient) Ping(s *go_sheep.State, a string) (state *go_sheep.State, err error) {
-	var conn *grpc.ClientConn
-	conn, err = grpc.Dial(a, grpc.WithInsecure())
-	if err != nil {
-		return
-	}
-
-	client := go_sheep.NewSWIMClient(conn)
-	state, err = client.Ping(context.Background(), s)
-
-	return
-}
-
-func (g *grpcClient) IndirectPing(s *go_sheep.State, delegatedNodes []string, t string) (states []*go_sheep.State, err error) {
+func (g *GRPCClient) DoIndirectPing(s *go_sheep.State, delegatedNodes []string, t string) (states []*go_sheep.State, err error) {
 	out := make(chan *go_sheep.State, len(delegatedNodes))
 	errCh := make(chan error, len(delegatedNodes))
 
@@ -93,7 +80,7 @@ func (g *grpcClient) IndirectPing(s *go_sheep.State, delegatedNodes []string, t 
 	return
 }
 
-func (swim *grpcClient) Join(in, targetServer *go_sheep.Node) (state *go_sheep.State, err error) {
+func (g *GRPCClient) DoJoin(in, targetServer *go_sheep.Node) (state *go_sheep.State, err error) {
 	var conn *grpc.ClientConn
 	conn, err = grpc.Dial(targetServer.Address, grpc.WithInsecure())
 	if err != nil {
@@ -102,6 +89,19 @@ func (swim *grpcClient) Join(in, targetServer *go_sheep.Node) (state *go_sheep.S
 
 	client := go_sheep.NewSWIMClient(conn)
 	state, err = client.Join(context.Background(), in)
+
+	return
+}
+
+func (g *GRPCClient) DoPing(s *go_sheep.State, a string) (state *go_sheep.State, err error) {
+	var conn *grpc.ClientConn
+	conn, err = grpc.Dial(a, grpc.WithInsecure())
+	if err != nil {
+		return
+	}
+
+	client := go_sheep.NewSWIMClient(conn)
+	state, err = client.Ping(context.Background(), s)
 
 	return
 }

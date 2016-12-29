@@ -7,21 +7,20 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/sayden/go-sheep"
-	"github.com/sayden/go-sheep/transport"
 )
 
 type swim struct {
-	transport go_sheep.Transporter
+	state *go_sheep.State
+	currentNode *go_sheep.Node
 }
 
-func NewSwim(t go_sheep.Transporter) go_sheep.SWIM {
+func NewSwim(n *go_sheep.Node) go_sheep.SWIM {
 	return &swim{
-		transport: t,
+		state: &go_sheep.State{
+			Nodes:[]*go_sheep.Node{n},
+		},
+		currentNode:n,
 	}
-}
-
-func (swim *swim) Ping(s *go_sheep.State, a string) (*go_sheep.State, error) {
-	return swim.transport.Ping(s, a)
 }
 
 func (swim *swim) GetRandomizedTarget(s *go_sheep.State, currentNodeInfo *go_sheep.Node) (n *go_sheep.Node, err error) {
@@ -37,10 +36,6 @@ func (swim *swim) GetRandomizedTarget(s *go_sheep.State, currentNodeInfo *go_she
 			return
 		}
 	}
-
-	err = errors.New("Could not find valid randomized target")
-
-	return
 }
 
 func (swim *swim) GetCheckers(s *go_sheep.State, targetNode *go_sheep.Node, currentNode *go_sheep.Node, n int) (foundNodes []*go_sheep.Node, err error) {
@@ -74,16 +69,6 @@ func (swim *swim) GetCheckers(s *go_sheep.State, targetNode *go_sheep.Node, curr
 			return
 		}
 	}
-
-	return
-}
-
-func (swim *swim) IndirectPing(s *go_sheep.State, d []*go_sheep.Node, t *go_sheep.Node) ([]*go_sheep.State, error) {
-	panic("not implemented")
-}
-
-func (swim *swim) CheckNode(s *go_sheep.State, t string, source string) error {
-	panic("not implemented")
 }
 
 func (swim *swim) MergeState(as, bs *go_sheep.State) (newState *go_sheep.State, err error) {

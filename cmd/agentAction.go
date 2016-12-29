@@ -26,10 +26,16 @@ func agentAction(c *cli.Context) {
 	}
 
 	//retrieve transport type
-	transport := transport.New(c.String("transport"))
+	transport := transport.New(transport.Type(c.String("transport")))
+
+	//retrieve failure detector
+	failureDetector := failure_detector.NewSwim(transport, currentNode)
 
 	//init server
-
+	err = transport.Serve(c.String("port"))
+	if err != nil {
+		logger.Fatal("Could not start server", zap.Error(err))
+	}
 
 	//launch loop
 	loop(c)
@@ -37,9 +43,7 @@ func agentAction(c *cli.Context) {
 
 func loop(c *cli.Context) {
 	swim := failure_detector.NewSwim(
-		transport.NewClient(
-			transport.Type(c.String("transport")),
-		),
+		transport.New(transport.Type(c.String("transport"))),
 	)
 
 	for {
