@@ -29,7 +29,10 @@ func agentAction(c *cli.Context) {
 	transport := transport.New(transport.Type(c.String("transport")))
 
 	//retrieve failure detector
-	failureDetector := failure_detector.NewSwim(transport, currentNode)
+	failureDetector := failure_detector.NewFailureDetector()
+
+	//Launch state handler
+	reqCh, quit := go_sheep.LaunchStateHandler(currentNode, failureDetector, logger)
 
 	//init server
 	err = transport.Serve(c.String("port"))

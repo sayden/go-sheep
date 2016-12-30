@@ -15,7 +15,7 @@ const (
 	REST Type = "REST"
 )
 
-func New(t Type, f go_sheep.SWIM) Transporter {
+func New(t Type) Transporter {
 	switch t {
 	case GRPC:
 		return &GRPCTransport{}

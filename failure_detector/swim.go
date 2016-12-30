@@ -7,21 +7,10 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/sayden/go-sheep"
+	"github.com/sayden/go-sheep/transport"
 )
 
-type swim struct {
-	state *go_sheep.State
-	currentNode *go_sheep.Node
-}
-
-func NewSwim(n *go_sheep.Node) go_sheep.SWIM {
-	return &swim{
-		state: &go_sheep.State{
-			Nodes:[]*go_sheep.Node{n},
-		},
-		currentNode:n,
-	}
-}
+type swim struct {}
 
 func (swim *swim) GetRandomizedTarget(s *go_sheep.State, currentNodeInfo *go_sheep.Node) (n *go_sheep.Node, err error) {
 	if len(s.Nodes) < 2 {

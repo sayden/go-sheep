@@ -11,14 +11,16 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-type GRPCServer struct{}
+type GRPCServer struct{
+	Server
+}
 
 func (g *GRPCServer) ServeJoin(*go_sheep.Node) (*go_sheep.State, error) {
 	panic("implement me")
 }
 
 func (g *GRPCServer) ServePing(s *go_sheep.State) (*go_sheep.State, error) {
-	newState := g.swim.MergeState()
+
 }
 
 func (g *GRPCServer) ServeIndirectCheck(*go_sheep.DelegateCheckRequest) (*go_sheep.State, error) {
