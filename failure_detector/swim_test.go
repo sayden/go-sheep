@@ -24,7 +24,7 @@ func TestGetCheckers(t *testing.T) {
 		},
 	}
 
-	swim := swim{}
+	swim := Swim{}
 
 	target, err := swim.GetRandomizedTarget(state, currentNode)
 	if err != nil {
@@ -78,7 +78,7 @@ var arrivedMessage *go_sheep.State = &go_sheep.State{
 }
 
 func TestState_Merge(t *testing.T) {
-	swim := swim{}
+	swim := Swim{}
 
 	initial.Nodes[0].LastSeen, _ = ptypes.TimestampProto(time.Now())
 	initial.Nodes[1].LastSeen, _ = ptypes.TimestampProto(time.Now())
@@ -141,7 +141,7 @@ func TestState_Merge(t *testing.T) {
 }
 
 func TestGetRandomizedTarget(t *testing.T) {
-	swim := swim{}
+	swim := Swim{}
 
 	currentNode := &go_sheep.Node{
 		Address: "12345:8080",

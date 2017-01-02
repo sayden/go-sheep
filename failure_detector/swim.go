@@ -7,12 +7,11 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/sayden/go-sheep"
-	"github.com/sayden/go-sheep/transport"
 )
 
-type swim struct {}
+type Swim struct{}
 
-func (swim *swim) GetRandomizedTarget(s *go_sheep.State, currentNodeInfo *go_sheep.Node) (n *go_sheep.Node, err error) {
+func (Swim) GetRandomizedTarget(s *go_sheep.State, currentNodeInfo *go_sheep.Node) (n *go_sheep.Node, err error) {
 	if len(s.Nodes) < 2 {
 		return nil, errors.New("Only one node to randomize")
 	}
@@ -27,7 +26,7 @@ func (swim *swim) GetRandomizedTarget(s *go_sheep.State, currentNodeInfo *go_she
 	}
 }
 
-func (swim *swim) GetCheckers(s *go_sheep.State, targetNode *go_sheep.Node, currentNode *go_sheep.Node, n int) (foundNodes []*go_sheep.Node, err error) {
+func (Swim) GetCheckers(s *go_sheep.State, targetNode *go_sheep.Node, currentNode *go_sheep.Node, n int) (foundNodes []*go_sheep.Node, err error) {
 	if len(s.Nodes) < n+1 {
 		return nil, errors.New("Not enough nodes in state")
 	}
@@ -60,7 +59,7 @@ func (swim *swim) GetCheckers(s *go_sheep.State, targetNode *go_sheep.Node, curr
 	}
 }
 
-func (swim *swim) MergeState(as, bs *go_sheep.State) (newState *go_sheep.State, err error) {
+func (Swim) MergeState(as, bs *go_sheep.State) (newState *go_sheep.State, err error) {
 	newState = &go_sheep.State{
 		Nodes: make([]*go_sheep.Node, 0),
 	}

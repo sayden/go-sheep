@@ -4,6 +4,20 @@ import "fmt"
 
 type Errors []error
 
+type CheckError struct {
+	Source *Node
+	Target *Node
+	Err    error
+}
+
+func (c *CheckError) Error() string {
+	return fmt.Sprintf("Error checking node %s using node %s:\n%s", c.Target.Address, c.Source.Address, c.Err)
+}
+
+type NetworkError struct {
+	error
+}
+
 func NewErrors(n int) *Errors {
 	var errors Errors = make([]error, n)
 	return &errors
@@ -17,24 +31,10 @@ func (e Errors) Error() (err string) {
 	return
 }
 
-type CheckError struct {
-	Source Node
-	Target Node
-	Err    error
-}
-
-func (c *CheckError) Error() string {
-	return fmt.Sprintf("Error checking node %s using node %s:\n%s", c.Target.Address, c.Source.Address, c.Err)
-}
-
-func NewCheckError(s, t Node, err error) error {
+func NewCheckError(s, t *Node, err error) error {
 	return &CheckError{
 		Err:    err,
 		Source: s,
 		Target: t,
 	}
-}
-
-type NetworkError struct {
-	error
 }

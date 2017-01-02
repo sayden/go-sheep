@@ -1,6 +1,9 @@
 package transport
 
-import "github.com/sayden/go-sheep"
+import (
+	"github.com/sayden/go-sheep"
+	"github.com/uber-go/zap"
+)
 
 type Transporter interface {
 	Client
@@ -15,10 +18,10 @@ const (
 	REST Type = "REST"
 )
 
-func New(t Type) Transporter {
+func New(t Type, l zap.Logger) Transporter {
 	switch t {
 	case GRPC:
-		return &GRPCTransport{}
+		return NewGRPCTransport(l)
 	case REST:
 		panic("Not implemented yet")
 	default:

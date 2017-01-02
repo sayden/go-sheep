@@ -8,13 +8,15 @@ import (
 	"sync"
 
 	"github.com/sayden/go-sheep"
+	"github.com/uber-go/zap"
 )
 
 type GRPCClient struct {
 	Client
+	logger zap.Logger
 }
 
-func (g *GRPCClient) DoIndirectPing(s *go_sheep.State, delegatedNodes []string, t string) (states []*go_sheep.State, err error) {
+func (g *GRPCClient) DoIndirectPing(s *go_sheep.State, delegatedNodes []*go_sheep.Node, t *go_sheep.Node) (states []*go_sheep.State, err error) {
 	out := make(chan *go_sheep.State, len(delegatedNodes))
 	errCh := make(chan error, len(delegatedNodes))
 
@@ -22,17 +24,13 @@ func (g *GRPCClient) DoIndirectPing(s *go_sheep.State, delegatedNodes []string, 
 	wg.Add(len(delegatedNodes))
 
 	for _, node := range delegatedNodes {
-		go func(out chan<- *go_sheep.State, s *go_sheep.State, delegatedNode, t string) {
+		go func(out chan<- *go_sheep.State, s *go_sheep.State, delegatedNode, t *go_sheep.Node) {
 			defer wg.Done()
 
 			var conn *grpc.ClientConn
-			conn, err := grpc.Dial(delegatedNode, grpc.WithInsecure())
+			conn, err := grpc.Dial(delegatedNode.Address, grpc.WithInsecure())
 			if err != nil {
-				errCh <- go_sheep.NewCheckError(
-					go_sheep.Node{Address: delegatedNode},
-					go_sheep.Node{Address: t},
-					err,
-				)
+				errCh <- go_sheep.NewCheckError(delegatedNode,t,err)
 				return
 			}
 
@@ -45,11 +43,7 @@ func (g *GRPCClient) DoIndirectPing(s *go_sheep.State, delegatedNodes []string, 
 			})
 
 			if err != nil {
-				errCh <- go_sheep.NewCheckError(
-					go_sheep.Node{Address: delegatedNode},
-					go_sheep.Node{Address: t},
-					err,
-				)
+				errCh <- go_sheep.NewCheckError(delegatedNode,t,err)
 				return
 			}
 

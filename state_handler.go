@@ -1,6 +1,16 @@
 package go_sheep
 
-import "github.com/uber-go/zap"
+import (
+	"sync"
+	"github.com/uber-go/zap"
+)
+
+type SafeState struct {
+	*State
+	sync.RWMutex
+}
+
+var CurrentState *SafeState
 
 type StateAction byte
 

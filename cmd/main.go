@@ -10,19 +10,16 @@ import (
 
 var logger zap.Logger = zap.New(zap.NewTextEncoder())
 
-var state *go_sheep.State
-
 var loopTime int = 5
 
 var currentNode *go_sheep.Node
 
 func main() {
-
-	state = &go_sheep.State{
-		Nodes: make([]*go_sheep.Node, 0),
+	go_sheep.CurrentState = &go_sheep.SafeState{
+		State: &go_sheep.State{
+			Nodes: make([]*go_sheep.Node, 1),
+		},
 	}
-
-	state.Nodes = []*go_sheep.Node{currentNode}
 
 	app := cli.NewApp()
 	app.Name = "boom"
@@ -38,35 +35,15 @@ func main() {
 
 	app.Commands = []cli.Command{
 		{
-			Name:    "join",
-			Aliases: []string{"j"},
-			Usage:   "Join a cluster",
-			Action:  joinAction,
-			Flags: []cli.Flag{
-				cli.IntFlag{
-					Name:   "port, p",
-					EnvVar: "GO_SHEEP_PEER_PORT",
-					Value:  8080,
-					Usage:  "Port of peer to join",
-				},
-				cli.StringFlag{
-					Name:   "bind, b",
-					Usage:  "IP to bind to",
-					Value:  "0.0.0.0",
-					EnvVar: "GO_SHEEP_PEER_IP",
-				},
-			},
-		},
-		{
 			Name:    "agent",
 			Aliases: []string{"a"},
 			Usage:   "Launch agent",
 			Action:  agentAction,
 			Flags: []cli.Flag{
-				cli.IntFlag{
+				cli.StringFlag{
 					Name:   "port, p",
 					EnvVar: "GO_SHEEP_AGENT_PORT",
-					Value:  8080,
+					Value:  "8080",
 					Usage:  "Port to listen for other nodes",
 				},
 				cli.StringFlag{
@@ -74,6 +51,17 @@ func main() {
 					Usage:  "IP to bind to",
 					Value:  "0.0.0.0",
 					EnvVar: "GO_SHEEP_BIND_IP",
+				},
+				cli.StringFlag{
+					Name:   "target-server",
+					EnvVar: "GO_SHEEP_TARGET_SERVER",
+					Value:  "0.0.0.0",
+					Usage:  "Server to join to",
+				},
+				cli.StringFlag{
+					Name:   "target-port",
+					EnvVar: "GO_SHEEP_TARGET_PORT",
+					Usage:  "Port where the Server to join to is listening",
 				},
 			},
 		},
